@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dyslexia Grader Data Generator</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; padding: 20px; }
+        textarea { width: 100%; height: 300px; margin-bottom: 20px; }
+        button { padding: 10px 20px; font-size: 16px; margin-right: 10px; cursor: pointer; }
+        .success { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Phase 1: Generate Training Data (200+ Samples)</h1>
+    <p>Click "Generate" to create a large dataset of specialized text and scores. This dataset replaces the mock data used previously.</p>
+    <button onclick="generateData()">1. Generate Training Data</button>
+    <button onclick="saveData()" disabled id="saveButton">2. Save Data as generated_training_data.json</button>
+    <p id="status"></p>
+    <textarea id="dataOutput" readonly placeholder="Generated JSON data will appear here..."></textarea>
+
+    <script>
+        const SAMPLE_COUNT = 210; // Generate over 200 samples
+        const CORE_ANSWERS = [
+            // Core Physics/Science (Score 5)
+            { t: "The earth orbits the sun, held by gravity.", s: 5 },
+            { t: "Water boils at 100 degrees Celsius and freezes at zero.", s: 5 },
+            // Core Literary/Conceptual (Score 4-5)
+            { t: "The bottom line is that dyslexia does exist, no matter what name people give it.", s: 5 },
+            { t: "Its prevalence is actually one in five children, which is a high number.", s: 4 },
+            // Incorrect Conceptual (Score 0-1)
+            { t: "The sun is blue, and the earth is flat.", s: 0 },
+            { t: "Water boils at fifty degrees and turns into dirt.", s: 1 }
+        ];
+
+        // Common Dyslexia Errors (Phonetic/Visual)
+        const ERROR_MAP = {
+            'earth': ['erth', 'eirth', 'earht'],
+            'orbits': ['orpbits', 'orbitts'],
+            'sun': ['sunn', 'sin'],
+            'degrees': ['deggres', 'degress'],
+            'bottom': ['bottob', 'boitom'],
+            'that': ['thit', 'taht'],
+            'does': ['doet', 'dous'],
+            'exist': ['exitt', 'esit']
+        };
+
+        function introduceErrors(text) {
+            let newText = text;
+            for (const correct in ERROR_MAP) {
+                if (newText.includes(correct)) {
+                    const errors = ERROR_MAP[correct];
+                    if (Math.random() < 0.4) { // 40% chance of introducing an error
+                        const error = errors[Math.floor(Math.random() * errors.length)];
+                        newText = newText.replace(correct, error);
+                    }
+                }
+            }
+            return newText;
+        }
+
+        function generateData() {
+            const data = [];
+            for (let i = 0; i < SAMPLE_COUNT; i++) {
+                const baseSample = CORE_ANSWERS[i % CORE_ANSWERS.length];
+                let text;
+                let score = baseSample.s;
+
+                if (i < 10) {
+                    // Start with 10 clean samples
+                    text = baseSample.t;
+                } else if (i % 3 === 0) {
+                    // Introduce errors to a third of the samples (high score)
+                    text = introduceErrors(baseSample.t);
+                } else if (i % 5 === 0) {
+                    // Slightly modify phrasing (medium score)
+                    text = baseSample.t.replace('the', 'The');
+                    score = Math.max(1, score - 1);
+                } else {
+                    // Keep clean (original score)
+                    text = baseSample.t;
+                }
+
+                data.push({ text: text, score: score });
+            }
+
+            const jsonOutput = JSON.stringify(data, null, 2);
+            document.getElementById('dataOutput').value = jsonOutput;
+            document.getElementById('status').className = 'success';
+            document.getElementById('status').innerText = `✅ Data generation complete. ${data.length} samples created.`;
+            document.getElementById('saveButton').disabled = false;
+        }
+
+        function saveData() {
+            const jsonOutput = document.getElementById('dataOutput').value;
+            if (!jsonOutput) {
+                alert("Please generate data first.");
+                return;
+            }
+
+            const blob = new Blob([jsonOutput], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'generated_training_data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            document.getElementById('status').className = 'success';
+            document.getElementById('status').innerText = `✅ generated_training_data.json downloaded. Copy this file into your project root.`;
+        }
+    </script>
+</body>
+</html>
