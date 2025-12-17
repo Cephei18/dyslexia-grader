@@ -1,176 +1,104 @@
-🧠 Dyslexia-Aware Semantic Grading System
+# 🧠 Dyslexia-Aware Semantic Grading System  
+**Fair Assessment Based on Knowledge, Not Spelling**
 
-Fair Assessment Based on Knowledge, Not Spelling.
+An advanced **Natural Language Processing (NLP) pipeline** designed to decouple spelling and syntactic noise from conceptual understanding, enabling **equitable grading for neurodiverse students**, especially those with dyslexia.
 
-An advanced Natural Language Processing (NLP) pipeline designed to decouple spelling and syntactic noise from conceptual understanding, ensuring equitable grading for neurodiverse students.
+---
 
-📖 Table of Contents
+## 📖 Table of Contents
 
-Problem Statement
+- [Problem Statement](#-problem-statement)
+- [Solution Architecture](#-solution-architecture)
+- [Key Features](#-key-features)
+- [Installation](#️-installation)
+- [Usage](#-usage)
+- [Technical Details](#-technical-details)
+- [Project Structure](#-project-structure)
+- [Acknowledgments](#-acknowledgments)
 
-Solution Architecture
+---
 
-Key Features
+## 🚩 Problem Statement
 
-Installation
+Traditional automated grading systems rely heavily on **keyword matching** and **rigid syntax rules**, which unintentionally penalize neurodiverse students.
 
-Usage
+### Challenges Faced by Dyslexic Students
 
-Technical Details
+- **Spelling Penalty**  
+  Misspelled words are marked incorrect even when the underlying concept is correct.
 
-Project Structure
+- **Semantic Failure**  
+  Standard NLP models often fail to embed and compare noisy text accurately, resulting in low similarity scores.
 
-🚩 Problem Statement
+### 🎯 Goal
 
-Traditional automated grading systems rely heavily on keyword matching and rigid syntax rules. This creates a double penalty for students with dyslexia:
+Build a system that **“reads through the noise”** and evaluates answers based on **intent and meaning**, not spelling accuracy.
 
-Spelling Penalty: Misspelled words are flagged as incorrect, even if the concept is right.
+---
 
-Semantic Failure: Standard language models often fail to tokenize and embed "noisy" text correctly, leading to low semantic similarity scores.
+## 🏗️ Solution Architecture
 
-Goal: Build a system that "reads through" the noise to evaluate the intent and meaning of an answer.
+The system follows a robust **Two-Stage NLP Pipeline (M1 → M2)** to ensure stability, fairness, and explainability.
 
-🏗️ Solution Architecture
+### 🔹 M0: Input Acquisition
 
-The system utilizes a robust Two-Stage NLP Pipeline (M1 $\rightarrow$ M2) to process inputs sequentially.
+- Accepts raw student answers via typed text or OCR simulation.
+- Designed to handle messy, real-world input without failure.
+- Includes placeholders for **Google Cloud Vision API** integration.
 
-🔹 M0: Input Acquisition
+---
 
-Handles raw student input via typed text or OCR (Optical Character Recognition) simulation.
+### 🔹 M1: Intelligent Normalizer (The *Guardrail*)
 
-Robustness: Designed to accept messy, real-world input without crashing.
+- **Algorithm:** Damerau–Levenshtein Edit Distance  
+- **Purpose:** Corrects dyslexic-specific errors such as transpositions (`teh → the`) and phonetic swaps.
+- **Safety Mechanisms:**
+  - Uses a high-confidence correction dictionary.
+  - Skips valid English words to avoid over-correction.
 
-Integration: Includes placeholders for Google Cloud Vision API integration.
+---
 
-🔹 M1: Intelligent Normalizer (The "Guardrail")
+### 🔹 M2: Semantic Grader (The *Brain*)
 
-Algorithm: Damerau-Levenshtein Edit Distance.
+- **Model:** Fine-tuned `distilbert-base-uncased`
+- **Task:** Semantic Textual Similarity (STS)
+- **Evaluation Metric:** Quadratic Weighted Kappa (QWK)
+- **Performance:** Achieved **~0.96 QWK**, indicating near-human grading agreement.
 
-Function: Unlike standard spell-checkers, this algorithm accounts for transpositions (e.g., 'teh' $\rightarrow$ 'the'), which are the signature error pattern of dyslexia.
+---
 
-Safety: Includes a dictionary of high-confidence corrections and skips valid English words to prevent over-correction.
+## ✨ Key Features
 
-🔹 M2: Semantic Grader (The "Brain")
+- **Neurodiverse-Friendly Normalization**  
+  Handles visual confusions (`b ↔ d`) and phonetic swaps (`ph → f`).
 
-Model: Fine-Tuned DistilBERT for Sequence Classification.
+- **Contradiction Guardrail**  
+  Uses **Sentence-BERT (SBERT)** to detect semantic contradictions and force-fail incorrect answers.
 
-Task: Semantic Textual Similarity (STS). The model compares the meaning of the normalized student answer against a reference answer.
+- **Aggressive Standardization**  
+  Removes casing, spacing, and formatting noise to focus purely on semantics.
 
-Validation: Achieved a Quadratic Weighted Kappa (QWK) score of ~0.96 on a held-out test set.
+- **Explainability & Transparency**  
+  UI displays a correction log showing exactly which words were modified.
 
-✨ Key Features
+---
 
-Neurodiverse-Friendly Normalization: Specifically targets phonetic swaps (ph $\rightarrow$ f) and visual transpositions (b $\rightarrow$ d).
+## ⚙️ Installation
 
-Contradiction Guardrail: Uses Sentence-BERT (SBERT) to detect fundamental semantic contradictions (e.g., "I do not have dyslexia" vs. "I have dyslexia") and force-fails them, preventing false positives.
-
-Aggressive Standardization: Pre-processing pipeline strips casing and whitespace noise to ensure the model focuses purely on semantics.
-
-Transparency Log: The UI provides a detailed log of exactly which words were corrected, ensuring the grading process is explainable.
-
-⚙️ Installation
-
-Clone the Repository
-
-git clone [https://github.com/YOUR_USERNAME/dyslexia-grader-final.git](https://github.com/YOUR_USERNAME/dyslexia-grader-final.git)
+```bash
+git clone https://github.com/YOUR_USERNAME/dyslexia-grader-final.git
 cd dyslexia-grader-final
 
-
-Create a Virtual Environment (Recommended)
 
 python -m venv venv
 # Windows
 venv\Scripts\activate
-# Mac/Linux
+# macOS / Linux
 source venv/bin/activate
 
 
-Install Dependencies
-
 pip install -r requirements.txt
-
-
-(Note: Ensure torch is installed compatible with your CUDA version if using GPU).
-
-Download NLTK Data
-The application will attempt to download this automatically, but you can run:
 
 python -c "import nltk; nltk.download('words')"
 
-
-🚀 Usage
-
-Start the Application
-
 python app.py
-
-
-Access the UI
-Open your browser and navigate to the local URL provided (usually http://127.0.0.1:7860).
-
-Test the Pipeline
-
-Input: Type a sentence with dyslexic errors (e.g., "The dottom line is that byslexia does exist.")
-
-Reference: Provide the correct answer (e.g., "The bottom line is that dyslexia does exist.")
-
-Result: The system will correct the errors in the log and assign a Semantic Score (0-5).
-
-🔬 Technical Details
-
-Component
-
-Specification
-
-Base Model
-
-distilbert-base-uncased
-
-Training Epochs
-
-40 (for maximum convergence)
-
-Dataset Size
-
-410+ Samples (Composite)
-
-Data Split
-
-80% Train / 10% Val / 10% Test
-
-Optimizer
-
-AdamW
-
-Loss Function
-
-CrossEntropyLoss
-
-Dataset Composition
-
-To ensure generalization, we trained on a Composite Dataset:
-
-51% Custom Dyslexic Set: High-quality answers infused with intentional errors to teach "accommodation."
-
-49% ASAP-SAS Subset: Complex academic sentences from the Automated Student Assessment Prize corpus to teach "generalization."
-
-📂 Project Structure
-
-dyslexia_grader/
-├── app.py                      # Main application entry point (Gradio UI)
-├── training_script.py          # Script used to fine-tune the model
-├── data_generator.html         # Tool used to generate custom synthetic data
-├── generated_training_data.json # The composite dataset
-├── requirements.txt            # Python dependencies
-├── src/
-│   └── normalizer.py           # M1 Logic: Damerau-Levenshtein algorithm
-└── custom_grader_model/        # (Artifact) The saved fine-tuned model files
-
-
-🛡️ Acknowledgments
-
-Inspired by the need for inclusive EdTech tools.
-
-Built using Hugging Face Transformers and Gradio.
-
-Special thanks to the open-source NLP community for the nltk and sentence-transformers libraries.
